@@ -1,121 +1,154 @@
 from django import forms
 from django.forms import formset_factory
+from .models import Product, Invoice, InvoiceDetail
 
-from .models import *
+
+# Common Bootstrap class
+COMMON_CLASS = 'form-control'
 
 
 class ProductForm(forms.ModelForm):
+
     class Meta:
         model = Product
-        fields = [
-            'product_name',
-            'product_price',
-            'product_unit',
-        ]
+        fields = ['product_name', 'product_price', 'product_unit']
+
         widgets = {
             'product_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'id': 'product_name',
-                'placeholder': 'Enter name of the product',
+                'class': COMMON_CLASS,
+                'placeholder': 'Enter product name',
+                'maxlength': '100',
             }),
+
             'product_price': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'id': 'product_price',
-                'placeholder': 'Enter price of the product',
-                'type': 'number',
+                'class': COMMON_CLASS,
+                'placeholder': 'Enter product price',
+                'min': '1',
+                'step': '0.01',
             }),
+
             'product_unit': forms.TextInput(attrs={
-                'class': 'form-control',
-                'id': 'product_unit',
-                'placeholder': 'Enter unit of the product',
+                'class': COMMON_CLASS,
+                'placeholder': 'Enter product unit',
             }),
         }
 
+    # Custom validation
+    def clean_product_price(self):
+        price = self.cleaned_data.get('product_price')
 
-# class CustomerForm(forms.ModelForm):
-#     class Meta:
-#         model = Customer
-#         fields = [
-#             'customer_name',
-#             'customer_gender',
-#             'customer_dob',
-#         ]
-#         widgets = {
-#             'customer_name': forms.TextInput(attrs={
-#                 'class': 'form-control',
-#                 'id': 'customer_name',
-#                 'placeholder': 'Enter name of the customer',
-#             }),
-#             'customer_gender': forms.Select(attrs={
-#                 'class': 'form-control',
-#                 'id': 'customer_gender',
-#             }),
-#             'customer_dob': forms.DateInput(attrs={
-#                 'class': 'form-control',
-#                 'id': 'customer_dob',
-#                 'placeholder': '2000-01-01',
-#                 'type': 'date',
-#             }),
-#         }
+        if price <= 0:
+            raise forms.ValidationError(
+                "Product price must be greater than 0."
+            )
+
+        return price
 
 
 class InvoiceForm(forms.ModelForm):
+
     class Meta:
         model = Invoice
-        fields = [
-            'customer',
-            'comments',
-            'contact',
-            'email',
-        ]
+        fields = ['customer', 'comments', 'contact', 'email']
+
         widgets = {
             'customer': forms.TextInput(attrs={
-                'class': 'form-control',
-                'id': 'invoice_customer',
-                'placeholder': 'Enter name of the customer',
-            }),
-            'contact': forms.TextInput(attrs={
-                'class': 'form-control',
-                'id': 'invoice_contact',
-                'placeholder': 'Enter contact of the customer',
-            }),
-            'email': forms.EmailInput(attrs={
-                'class': 'form-control',
-                'id': 'invoice_email',
-                'placeholder': 'Enter email of the customer',
-            }),
-            'comments': forms.TextInput(attrs={
-                'class': 'form-control',
-                'id': 'invoice_comments',
-                'placeholder': 'Enter comments',
+                'class': COMMON_CLASS,
+                'placeholder': 'Enter customer name',
             }),
 
+            'contact': forms.TextInput(attrs={
+                'class': COMMON_CLASS,
+                'placeholder': 'Enter customer contact',
+                'maxlength': '10',
+            }),
+
+            'email': forms.EmailInput(attrs={
+                'class': COMMON_CLASS,
+                'placeholder': 'Enter customer email',
+            }),
+
+            'comments': forms.Textarea(attrs={
+                'class': COMMON_CLASS,
+                'placeholder': 'Additional comments',
+                'rows': 3,
+            }),
         }
+
+    # Contact validation
+    def clean_contact(self):
+        contact = self.cleaned_data.get('contact')
+
+        if not contact.isdigit():
+            raise forms.ValidationError(
+                "Contact number should contain digits only."
+            )
+
+        if len(contact) < 10:
+            raise forms.ValidationError(
+                "Contact number must be at least 10 digits."
+            )
+
+        return contact
 
 
 class InvoiceDetailForm(forms.ModelForm):
+
     class Meta:
         model = InvoiceDetail
-        fields = [
-            'product',
-            'amount',
-        ]
+        fields = ['product', 'amount']
+
         widgets = {
             'product': forms.Select(attrs={
-                'class': 'form-control',
-                'id': 'invoice_detail_product',
+                'class': COMMON_CLASS,
             }),
-            'amount': forms.TextInput(attrs={
-                'class': 'form-control',
-                'id': 'invoice_detail_amount',
-                'placeholder': '0',
-                'type': 'number',
-            })
+
+            'amount': forms.NumberInput(attrs={
+                'class': COMMON_CLASS,
+                'placeholder': 'Enter quantity',
+                'min': '1',
+            }),
         }
 
+    # Quantity validation
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
 
-class excelUploadForm(forms.Form):
-    file = forms.FileField()
+        if amount <= 0:
+            raise forms.ValidationError(
+                "Amount must be greater than 0."
+            )
+
+        return amount
 
 
-InvoiceDetailFormSet = formset_factory(InvoiceDetailForm, extra=1)
+class ExcelUploadForm(forms.Form):
+
+    file = forms.FileField(
+        widget=forms.ClearableFileInput(attrs={
+            'class': COMMON_CLASS,
+            'accept': '.xlsx,.xls,.csv'
+        })
+    )
+
+    # File validation
+    def clean_file(self):
+        file = self.cleaned_data.get('file')
+
+        allowed_extensions = ['xlsx', 'xls', 'csv']
+
+        extension = file.name.split('.')[-1]
+
+        if extension not in allowed_extensions:
+            raise forms.ValidationError(
+                "Only Excel or CSV files are allowed."
+            )
+
+        return file
+
+
+InvoiceDetailFormSet = formset_factory(
+    InvoiceDetailForm,
+    extra=1,
+    can_delete=True
+)
