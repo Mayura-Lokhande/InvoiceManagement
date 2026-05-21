@@ -3,11 +3,11 @@ from django.db.models import Sum, F, Q
 from django.core.exceptions import ValidationError
 import logging
 
-# Configure logger for audit trail
+
 logger = logging.getLogger(__name__)
 
 
-# Custom exception for consistency errors
+
 class ConsistencyError(Exception):
     """Raised when Invoice total does not match sum of InvoiceDetail amounts."""
     pass

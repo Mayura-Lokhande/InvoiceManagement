@@ -1,22 +1,119 @@
-#!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+#!/usr/bin/env python3
+"""
+Django Management Utility
+-------------------------
+Enhanced and production-ready version of manage.py
+
+Features:
+✔ Improved error handling
+✔ Better logging
+✔ Environment validation
+✔ Python version check
+✔ Cleaner structure
+✔ Production-quality comments
+✔ Safe execution flow
+"""
+
 import os
 import sys
+import logging
+from pathlib import Path
 
 
-def main():
-    """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'invoice_system_management.settings')
+# =========================
+# Configuration
+# =========================
+
+BASE_DIR = Path(__file__).resolve().parent
+
+PROJECT_SETTINGS = "invoice_system_management.settings"
+
+
+
+
+# =========================
+# Logging Configuration
+# =========================
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+
+
+# =========================
+# Utility Functions
+# =========================
+
+def check_python_version() -> None:
+    """
+    Ensure the correct Python version is being used.
+    """
+    if sys.version_info < MIN_PYTHON:
+        raise RuntimeError(
+            f"Python {MIN_PYTHON[0]}.{MIN_PYTHON[1]} or higher is required."
+        )
+
+
+def configure_environment() -> None:
+    """
+    Configure Django environment variables.
+    """
+    os.environ.setdefault(
+        "DJANGO_SETTINGS_MODULE",
+        PROJECT_SETTINGS
+    )
+
+
+def import_django():
+    """
+    Import Django management utility safely.
+    """
     try:
         from django.core.management import execute_from_command_line
+        return execute_from_command_line
+
     except ImportError as exc:
+        logger.error("Django import failed.")
+
         raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
+            "\nDjango is not installed or not available "
+            "in the current environment.\n\n"
+            "Possible Solutions:\n"
+            "1. Activate your virtual environment\n"
+            "2. Install dependencies:\n"
+            "   pip install -r requirements.txt\n"
+            "3. Verify PYTHONPATH configuration\n"
         ) from exc
-    execute_from_command_line(sys.argv)
 
 
-if __name__ == '__main__':
+# =========================
+# Main Entry Point
+# =========================
+
+def main() -> None:
+    """
+    Main execution function.
+    """
+
+    check_python_version()
+    configure_environment()
+    execute_from_command_line = import_django()
+    
+    try:
+        execute_from_command_line(sys.argv)
+    except KeyboardInterrupt:
+        logger.info("Execution interrupted by user.")
+        sys.exit(0)
+    except Exception as startup_error:
+        logger.error(f"Command execution failed: {startup_error}")
+        sys.exit(1)
+
+# =========================
+# Script Execution
+# =========================
+
+if __name__ == "__main__":
     main()
