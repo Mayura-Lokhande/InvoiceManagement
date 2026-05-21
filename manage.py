@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent
 
 PROJECT_SETTINGS = "invoice_system_management.settings"
 
-MIN_PYTHON = (3, 10)
+
 
 
 # =========================
@@ -98,21 +98,18 @@ def main() -> None:
     Main execution function.
     """
 
+    check_python_version()
+    configure_environment()
+    execute_from_command_line = import_django()
+    
     try:
-        check_python_version()
-
-        configure_environment()
-
-        execute_from_command_line = import_django()
-
-        logger.info("Starting Django management utility...")
-
         execute_from_command_line(sys.argv)
-
-    except Exception as error:
-        logger.exception("Application startup failed.")
-        sys.exit(f"\nERROR: {error}\n")
-
+    except KeyboardInterrupt:
+        logger.info("Execution interrupted by user.")
+        sys.exit(0)
+    except Exception as startup_error:
+        logger.error(f"Command execution failed: {startup_error}")
+        sys.exit(1)
 
 # =========================
 # Script Execution
