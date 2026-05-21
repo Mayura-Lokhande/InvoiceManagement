@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+from django.db import transaction
 
 from utils.filehandler import handle_file_upload
 
@@ -216,29 +217,30 @@ def create_invoice(request):
                 date=form.cleaned_data.get("date"),
             )
         if formset.is_valid():
-            total = 0
+            # Create invoice details - each save() triggers atomic total update
             for form in formset:
                 product = form.cleaned_data.get("product")
                 amount = form.cleaned_data.get("amount")
                 if product and amount:
-                    # Sum each row
-                    sum = float(product.product_price) * float(amount)
-                    # Sum of total invoice
-                    total += sum
+                    # Save detail - this automatically updates invoice total atomically
                     InvoiceDetail(
                         invoice=invoice, product=product, amount=amount
                     ).save()
-            # Pointing the customer
-            # points = 0
-            # if total > 1000:
-            #     points += total / 1000
-            # invoice.customer.customer_points = round(points)
-            # # Save the points to Customer table
-            # invoice.customer.save()
-
-            # Save the invoice
-            invoice.total = total
-            invoice.save()
+            
+            # Verify total consistency after all details are saved
+            try:
+                invoice.validate_total_consistency()
+            except ConsistencyError as e:
+                # Log the error and return error response
+                return render(request, "invoice/create_invoice.html", {
+                    "total_product": total_product,
+                    "total_invoice": total_invoice,
+                    "total_income": total_income,
+                    "form": form,
+                    "formset": formset,
+                    "error": str(e),
+                })
+            
             return redirect("view_invoice")
 
     context = {
@@ -304,8 +306,10 @@ def delete_invoice(request, pk):
     invoice = Invoice.objects.get(id=pk)
     invoice_detail = InvoiceDetail.objects.filter(invoice=invoice)
     if request.method == "POST":
-        invoice_detail.delete()
-        invoice.delete()
+        # Wrap deletion in atomic transaction to ensure consistency
+        with transaction.atomic():
+            # Delete invoice - cascade delete will handle invoice_detail records
+            invoice.delete()
         return redirect("view_invoice")
 
     context = {
