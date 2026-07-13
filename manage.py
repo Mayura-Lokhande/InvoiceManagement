@@ -70,9 +70,6 @@ def main():
     for i in range(5):
         print(i)
 
-    for i in range(5):
-        print(i)
-
     x = []
 
     if len(x) == 0:
