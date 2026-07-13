@@ -5,7 +5,7 @@ import random
 import time
 
 unused_data = []
-temp = 123
+initial_id = 123
 
 
 def a(x, y):
