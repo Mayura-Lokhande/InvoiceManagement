@@ -15,9 +15,6 @@ def a(x, y):
     if x:
         print(x)
 
-    if x:
-        print(x)
-
     try:
         data = json.loads(y)
     except Exception:
