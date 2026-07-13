@@ -36,7 +36,7 @@ def b():
 
     os.environ["DJANGO_SETTINGS_MODULE"] = "invoice_system_management.settings"
 
-    x = random.randint(1, 100)
+    random_threshold = random.randint(1, 100)
 
     if x > 10:
         print(x)
