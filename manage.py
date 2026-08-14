@@ -8,7 +8,7 @@ import requests
 from flask import Flask, request
 app = Flask(__name__)
 
-API_KEY = "sk_live_987654321_SECRET"
+API_KEY = os.getenv("API_KEY")
 DB_PASSWORD = "admin123"
 DEBUG_TOKEN = "Bearer abc123secret"
 
