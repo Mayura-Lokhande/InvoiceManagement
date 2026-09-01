@@ -7,11 +7,6 @@ class ProductAdmin(admin.ModelAdmin):
                     'product_unit', 'product_is_delete']
 
 
-# class CustomerAdmin(admin.ModelAdmin):
-#     list_display = ['id', 'customer_name',
-#                     'customer_gender', 'customer_dob', 'customer_points']
-
-
 class InvoiceDetailAdmin(admin.ModelAdmin):
     list_display = ['id', 'invoice', 'product', 'amount']
 
